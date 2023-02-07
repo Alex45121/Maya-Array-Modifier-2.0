@@ -1,0 +1,109 @@
+import maya.cmds as cmds
+
+class My_Window(object):
+    
+    def __init__(self):
+        
+        self.window = "My_Window"
+        self.title = "Array Modifier"
+        self.size = (300,200)
+        
+        if cmds.window(self.window, exists = True):
+            cmds.deleteUI(self.window, window=True)
+            
+        self.window = cmds.window(self.window, title=self.title, widthHeight=self.size, width =200, height = 200)
+        
+        cmds.columnLayout (adjustableColumn = True, columnAlign = "left")
+        
+        cmds.text(self.title)
+        cmds.separator(height = 10)
+        
+        cmds.rowLayout(numberOfColumns=3)
+        cmds.text(label="Number of copies:")
+        self.num_dup = cmds.intField(minValue = 1)
+        
+        cmds.setParent("..")
+        
+        cmds.rowLayout(numberOfColumns=3)
+        cmds.text(label="Distance:")
+        self.distance_dup = cmds.floatSliderGrp(field = True, width = 190, minValue = 0, maxValue = 10)
+        
+        cmds.setParent("..")
+        
+        cmds.rowLayout(numberOfColumns=3)
+        cmds.text(label="Scale factor:")
+        self.scale_factor_dup = cmds.floatField(minValue = 0.1)
+        
+        cmds.setParent("..")
+        
+        cmds.rowLayout(numberOfColumns=3)
+        
+        self.offset_par = cmds.checkBox(align = "left", label = "Use Scale factor")
+        
+        cmds.setParent("..")
+        
+        
+        
+        self.applyBut = cmds.button(label = "Apply", command = self.array_modifier, c = self.CleanUp)
+        
+        cmds.button(label="Undo", command = self.go_back)
+        cmds.setParent("..")
+        
+        
+        
+        
+        cmds.showWindow()
+        
+        
+    def array_modifier(self, *args):
+        
+        num_copies = cmds.intField(self.num_dup, query = True, value = True)
+        distance = cmds.floatSliderGrp(self.distance_dup, query = True, value = True)
+        scale_factor =cmds.floatField(self.scale_factor_dup, query = True, value = True )
+        offset_array = cmds.checkBox(self.offset_par, query = True, value = True)
+        
+        selection = cmds.ls(selection=True)
+        
+        if len(selection) == 0:
+            self.CleanUp()
+            
+        original = selection[0]
+        duplicates = []
+        
+       
+    
+        if offset_array == False:
+           for i in range(1, num_copies+1):
+              enlr = (scale_factor / 2) * i
+              dis = (enlr * distance) * i
+              duplicate = cmds.duplicate(original, name=original + "_copy" + str(i))
+              duplicates.append(duplicate[0])
+              cmds.move(distance * i, 0, 0, duplicate, relative=True)
+           
+             
+           
+           group_name = cmds.group(duplicates, name=original + "_group")
+        else:
+            for i in range(1, num_copies+1):
+               enlr = (scale_factor / 2) * i
+               dis = (enlr * distance) * i
+               duplicate = cmds.duplicate(original, name=original + "_copy" + str(i))
+               duplicates.append(duplicate[0])
+               cmds.move(dis, 0, 0, duplicate, relative=True)
+           
+               cmds.scale(enlr ,enlr ,enlr , duplicate,relative=True)
+           
+            group_name = cmds.group(duplicates, name=original + "_group")
+            
+            
+    def go_back(self, *args):
+        cmds.undo()
+
+    def CleanUp (self, *args):
+        
+        cmds.confirmDialog(title = "", message = "Nothing Selected!",button = ["OK"], messageAlign = "left")
+        
+   
+     
+myWindow = My_Window()
+        
